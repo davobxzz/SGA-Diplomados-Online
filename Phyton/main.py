@@ -1,4 +1,5 @@
 def registrar_alumno():
+
     print("/n Registro de Alumno")
     cedula = input("Ingrese la cedula:")
     nombre = input("Ingrese el nombre:")
@@ -16,8 +17,17 @@ def registrar_alumno():
                             
     print("Alumno registrado con exito")
 
+def registrar_profesor():
+        print("/n Registro de Profesor")
+        cedula = input("Ingrese la cedula:")
+        nombre = input("Ingrese el nombre:")
+        correo = input("Ingrese el correo:")
+        especialidad = input("Ingrese la especialidad:")
 
+        with open("profesores.txt","a", encoding="utf-8") as archivo:
+            archivo.write(f"{cedula},{nombre},{correo},{especialidad}\n")
 
+        print("Profesor registrado con exito")
 
 while True:
     print("SGA Diplomados Online")
@@ -35,6 +45,9 @@ while True:
     if opcion == "1":
             registrar_alumno()
 
+
+    if opcion == "2":
+        registrar_profesor()
 
     if opcion == "7":
         print("Cerrando SGA Diplomados Online")
