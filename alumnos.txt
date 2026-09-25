@@ -1,1 +1,2 @@
-33145964,Davo,Davobxzz@gmail.com,Diplomado,0,0,0
+33145964,David Mendoza,davobxzz@gmail.com,Diplomado,17.0,0,0
+32412779,Jose Tejada,angelmedinatejada@gmail.com,Diplomado,19.0,0,0

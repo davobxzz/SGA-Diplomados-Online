@@ -16,7 +16,6 @@ def registrar_alumno():
 
                             
     print("Alumno registrado con exito")
-
 def registrar_profesor():
         
         print("/n Registro de Profesor")
@@ -29,12 +28,16 @@ def registrar_profesor():
             archivo.write(f"{cedula},{nombre},{correo},{especialidad}\n")
 
         print("Profesor registrado con exito")
+
+
+        encontrado = True
 def registrar_nota():
     print("\n--- REGISTRO DE NOTA ---")
 
     cedula_buscada = input("Ingrese la cédula del alumno: ")
 
     encontrado = False
+    lineas_nuevas = []
 
     with open("alumnos.txt", "r", encoding="utf-8") as archivo:
         lineas = archivo.readlines()
@@ -48,11 +51,34 @@ def registrar_nota():
                 print("Programa:", datos[3])
                 print("Notas actuales:", datos[4], datos[5], datos[6])
 
-                encontrado = True
-                break
+                nota = float(input("Ingrese la nueva nota: "))
 
-    if not encontrado:
+                if datos[4] == "0":
+                    datos[4] = str(nota)
+
+                elif datos[5] == "0":
+                    datos[5] = str(nota)
+
+                elif datos[6] == "0":
+                    datos[6] = str(nota)
+
+                else:
+                    print("El alumno ya tiene las 3 notas registradas.")
+
+                encontrado = True
+
+            linea_actualizada = ",".join(datos) + "\n"
+            lineas_nuevas.append(linea_actualizada)
+
+    if encontrado:
+        with open("alumnos.txt", "w", encoding="utf-8") as archivo:
+            archivo.writelines(lineas_nuevas)
+
+        print("\nNota registrada correctamente.")
+
+    else:
         print("\nAlumno no encontrado.")
+   
 while True:
     print("SGA Diplomados Online")
     print("1. Registrar Alumno")
@@ -80,3 +106,4 @@ while True:
         print("Cerrando SGA Diplomados Online")
         break 
 
+3
