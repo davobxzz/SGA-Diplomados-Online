@@ -1,3 +1,4 @@
+pila_notas = []
 def registrar_alumno():
 
     print("/n Registro de Alumno")
@@ -32,11 +33,13 @@ def registrar_profesor():
 
         encontrado = True
 def registrar_nota():
-    print("\n--- REGISTRO DE NOTA ---")
+
+    print("/n Registro de Notas")
 
     cedula_buscada = input("Ingrese la cédula del alumno: ")
 
     encontrado = False
+    posicion_nota = None
     lineas_nuevas = []
 
     with open("alumnos.txt", "r", encoding="utf-8") as archivo:
@@ -55,12 +58,15 @@ def registrar_nota():
 
                 if datos[4] == "0":
                     datos[4] = str(nota)
+                    posicion_nota = 4
 
                 elif datos[5] == "0":
                     datos[5] = str(nota)
+                    posicion_nota = 5
 
                 elif datos[6] == "0":
                     datos[6] = str(nota)
+                    posicion_nota = 6
 
                 else:
                     print("El alumno ya tiene las 3 notas registradas.")
@@ -71,14 +77,59 @@ def registrar_nota():
             lineas_nuevas.append(linea_actualizada)
 
     if encontrado:
+
         with open("alumnos.txt", "w", encoding="utf-8") as archivo:
             archivo.writelines(lineas_nuevas)
+
+        # Guardamos la acción en la pila
+        if posicion_nota is not None:
+            pila_notas.append(
+                (cedula_buscada, posicion_nota, str(nota))
+            )
 
         print("\nNota registrada correctamente.")
 
     else:
         print("\nAlumno no encontrado.")
-   
+def deshacer_nota():
+
+    # Verificamos si la pila está vacía
+    if not pila_notas:
+        print("\nNo hay notas para deshacer.")
+        return
+
+    # Sacamos la última acción de la pila
+    ultima_accion = pila_notas.pop()
+
+    # Recuperamos los datos guardados
+    cedula = ultima_accion[0]
+    posicion = ultima_accion[1]
+
+    lineas_nuevas = []
+
+    # Abrimos el archivo para leerlo
+    with open("alumnos.txt", "r", encoding="utf-8") as archivo:
+        lineas = archivo.readlines()
+
+        for linea in lineas:
+
+            datos = linea.strip().split(",")
+
+            # Buscamos al alumno correspondiente
+            if datos[0] == cedula:
+
+                # Eliminamos la última nota registrada
+                datos[posicion] = "0"
+
+            # Reconstruimos la línea
+            linea_actualizada = ",".join(datos) + "\n"
+            lineas_nuevas.append(linea_actualizada)
+
+    # Guardamos nuevamente el archivo
+    with open("alumnos.txt", "w", encoding="utf-8") as archivo:
+        archivo.writelines(lineas_nuevas)
+
+    print("\nÚltimo registro de nota deshecho correctamente.")
 while True:
     print("SGA Diplomados Online")
     print("1. Registrar Alumno")
@@ -102,8 +153,11 @@ while True:
     if opcion == "3":
               registrar_nota()
 
+    if opcion == "4":
+             deshacer_nota()
+
     if opcion == "7":
         print("Cerrando SGA Diplomados Online")
         break 
 
-3
+
