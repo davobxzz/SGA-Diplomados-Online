@@ -1,0 +1,258 @@
+import java.util.Scanner;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Scanner entrada = new Scanner(System.in);
+        int opcion;
+
+        do {
+            System.out.println("\n======================================");
+            System.out.println("   SGA-DO: SISTEMA DIPLOMADOSONLINE");
+            System.out.println("======================================");
+            System.out.println("1. Registrar Alumno");
+            System.out.println("2. Registrar Profesor");
+            System.out.println("3. Registrar Notas a un Alumno");
+            System.out.println("4. Deshacer Último Registro de Nota");
+            System.out.println("5. Generar Cola de Certificados");
+            System.out.println("6. Mostrar Reporte General");
+            System.out.println("7. Salir");
+            System.out.println("======================================");
+            System.out.print("Seleccione una opción: ");
+
+            while (!entrada.hasNextInt()) {
+                System.out.println("Error: debe introducir un número.");
+                entrada.nextLine();
+                System.out.print("Seleccione una opción: ");
+            }
+
+            opcion = entrada.nextInt();
+            entrada.nextLine();
+
+            switch (opcion) {
+                case 1:
+                    registrarAlumno(entrada);
+                    break;
+
+                case 2:
+                    registrarProfesor(entrada);
+                    break;
+
+                case 3:
+                    System.out.println("Registro de notas pendiente.");
+                    break;
+
+                case 4:
+                    System.out.println("Deshacer nota pendiente.");
+                    break;
+
+                case 5:
+                    System.out.println("Cola de certificados pendiente.");
+                    break;
+
+                case 6:
+                    System.out.println("Reporte general pendiente.");
+                    break;
+
+                case 7:
+                    System.out.println("Cerrando el sistema SGA-DO. ¡Hasta pronto!");
+                    break;
+
+                default:
+                    System.out.println("Opción inválida. Seleccione del 1 al 7.");
+            }
+
+        } while (opcion != 7);
+
+        entrada.close();
+    }
+
+    public static void registrarAlumno(Scanner entrada) {
+
+        System.out.println("\n--- REGISTRO DE ALUMNO ---");
+
+        System.out.print("Ingrese la cédula: ");
+        String cedula = entrada.nextLine().trim();
+
+        if (cedula.isEmpty() || cedula.contains(",")) {
+            System.out.println("Error: cédula vacía o no válida.");
+            return;
+        }
+
+        // Comprobar si la cédula ya está registrada.
+        try {
+            Path ruta = Path.of("alumnos.txt");
+
+            if (Files.exists(ruta)) {
+                List<String> lineas = Files.readAllLines(ruta);
+
+                for (String linea : lineas) {
+                    String[] datos = linea.split(",", -1);
+
+                    if (datos.length > 0
+                            && datos[0].equals(cedula)) {
+                        System.out.println(
+                            "Error: ya existe un alumno con esa cédula."
+                        );
+                        return;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error al consultar los alumnos.");
+            return;
+        }
+
+        System.out.print("Ingrese el nombre completo: ");
+        String nombre = entrada.nextLine().trim();
+
+        System.out.print("Ingrese el correo electrónico: ");
+        String correo = entrada.nextLine().trim();
+
+        if (nombre.isEmpty() || correo.isEmpty()
+                || nombre.contains(",") || correo.contains(",")) {
+            System.out.println(
+                "Error: los datos no pueden estar vacíos ni contener comas."
+            );
+            return;
+        }
+
+        String programa;
+
+        while (true) {
+            System.out.println("Seleccione el programa académico:");
+            System.out.println("1. Curso");
+            System.out.println("2. Diplomado");
+            System.out.println("3. Bootcamp");
+            System.out.print("Opción: ");
+
+            String opcionPrograma = entrada.nextLine().trim();
+
+            switch (opcionPrograma) {
+                case "1":
+                    programa = "Curso";
+                    break;
+                case "2":
+                    programa = "Diplomado";
+                    break;
+                case "3":
+                    programa = "Bootcamp";
+                    break;
+                default:
+                    System.out.println("Opción inválida. Intente otra vez.");
+                    continue;
+            }
+
+            break;
+        }
+
+        // Cada alumno comienza con tres notas en cero.
+        String registro = cedula + "," + nombre + "," + correo + ","
+                + programa + ",0,0,0";
+
+        // Guardar el alumno al final del archivo.
+        try (FileWriter escritor = new FileWriter("alumnos.txt", true)) {
+            escritor.write(registro + System.lineSeparator());
+
+            System.out.println("\n¡Alumno registrado correctamente!");
+            System.out.println("Nombre: " + nombre);
+            System.out.println("Programa: " + programa);
+
+        } catch (IOException e) {
+            System.out.println("Error al guardar el alumno.");
+            System.out.println("Detalle: " + e.getMessage());
+        }
+    }
+
+    public static void registrarProfesor(Scanner entrada) {
+
+    System.out.println("\n--- REGISTRO DE PROFESOR ---");
+
+    System.out.print("Ingrese la cédula: ");
+    String cedula = entrada.nextLine().trim();
+
+    if (cedula.isEmpty() || cedula.contains(",")) {
+        System.out.println("Error: cédula vacía o no válida.");
+        return;
+    }
+
+    // Comprobar que la cédula no esté registrada.
+    try {
+        Path ruta = Path.of("profesores.txt");
+
+        if (Files.exists(ruta)) {
+            List<String> lineas = Files.readAllLines(ruta);
+
+            for (String linea : lineas) {
+                String[] datos = linea.split(",", -1);
+
+                if (datos.length > 0 && datos[0].equals(cedula)) {
+                    System.out.println(
+                        "Error: ya existe un profesor con esa cédula."
+                    );
+                    return;
+                }
+            }
+        }
+    } catch (IOException e) {
+        System.out.println("Error al consultar los profesores.");
+        return;
+    }
+
+    System.out.print("Ingrese el nombre completo: ");
+    String nombre = entrada.nextLine().trim();
+
+    System.out.print("Ingrese el correo electrónico: ");
+    String correo = entrada.nextLine().trim();
+
+    System.out.print("Ingrese la especialidad: ");
+    String especialidad = entrada.nextLine().trim();
+
+    System.out.print("Ingrese la materia asignada: ");
+    String materia = entrada.nextLine().trim();
+
+    if (nombre.isEmpty() || correo.isEmpty()
+            || especialidad.isEmpty() || materia.isEmpty()
+            || nombre.contains(",") || correo.contains(",")
+            || especialidad.contains(",") || materia.contains(",")) {
+
+        System.out.println(
+            "Error: los campos no pueden estar vacíos ni contener comas."
+        );
+        return;
+    }
+
+    // Organizar los datos en el formato del archivo.
+    String registro = cedula + "," + nombre + "," + correo + ","
+            + especialidad + "," + materia;
+
+    // Guardar el profesor sin borrar los registros anteriores.
+    try (FileWriter escritor =
+            new FileWriter("profesores.txt", true)) {
+
+        escritor.write(registro + System.lineSeparator());
+
+        System.out.println("\n¡Profesor registrado correctamente!");
+        System.out.println("Nombre: " + nombre);
+        System.out.println("Especialidad: " + especialidad);
+        System.out.println("Materia: " + materia);
+
+    } catch (IOException e) {
+        System.out.println("Error al guardar el profesor.");
+        System.out.println("Detalle: " + e.getMessage());
+    }
+}
+
+
+        }
+    
+
+
+
+    
