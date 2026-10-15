@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.util.Stack;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,11 +47,10 @@ public class Main {
                     break;
 
                 case 3:
-                    System.out.println("Registro de notas pendiente.");
+                    registrarNota(entrada);
                     break;
-
                 case 4:
-                    System.out.println("Deshacer nota pendiente.");
+                    deshacerUltimaNota();
                     break;
 
                 case 5:
@@ -72,6 +73,23 @@ public class Main {
 
         entrada.close();
     }
+static Stack<OperacionNota> pilaNotas = new Stack<>();
+
+static class OperacionNota {
+    String cedula;
+    int posicionNota;
+    String notaAnterior;
+    String notaNueva;
+
+    public OperacionNota(String cedula, int posicionNota,
+                         String notaAnterior, String notaNueva) {
+        this.cedula = cedula;
+        this.posicionNota = posicionNota;
+        this.notaAnterior = notaAnterior;
+        this.notaNueva = notaNueva;
+    }
+}
+
 
     public static void registrarAlumno(Scanner entrada) {
 
@@ -248,6 +266,185 @@ public class Main {
         System.out.println("Detalle: " + e.getMessage());
     }
 }
+    public static void registrarNota(Scanner entrada) {
+
+    System.out.println("\n--- REGISTRO DE NOTAS ---");
+
+    File archivo = new File("alumnos.txt");
+
+    if (!archivo.exists()) {
+        System.out.println("No existe el archivo de alumnos.");
+        return;
+    }
+
+    System.out.print("Ingrese la cédula del alumno: ");
+    String cedula = entrada.nextLine().trim();
+
+    try {
+        List<String> lineas = Files.readAllLines(archivo.toPath());
+
+        boolean encontrado = false;
+        boolean actualizado = false;
+
+        for (int i = 0; i < lineas.size(); i++) {
+
+            String[] datos = lineas.get(i).split(",", -1);
+
+            if (datos.length != 7) {
+                continue;
+            }
+
+            if (datos[0].equals(cedula)) {
+
+                encontrado = true;
+
+                System.out.println("Alumno: " + datos[1]);
+                System.out.println("Programa: " + datos[3]);
+                System.out.println("Nota 1: " + datos[4]);
+                System.out.println("Nota 2: " + datos[5]);
+                System.out.println("Nota 3: " + datos[6]);
+
+                int posicion = -1;
+
+                // Buscar el primer espacio de nota disponible.
+                for (int j = 4; j <= 6; j++) {
+                    if (datos[j].equals("0")) {
+                        posicion = j;
+                        break;
+                    }
+                }
+
+                if (posicion == -1) {
+                    System.out.println(
+                        "El alumno ya tiene sus tres notas registradas."
+                    );
+                    break;
+                }
+
+                System.out.print("Ingrese la nueva nota (0 a 20): ");
+
+                String entradaNota = entrada.nextLine().trim();
+                double nota;
+
+                try {
+                    nota = Double.parseDouble(
+                        entradaNota.replace(',', '.')
+                    );
+                } catch (NumberFormatException e) {
+                    System.out.println("Error: debe introducir un número.");
+                    break;
+                }
+
+                if (nota < 0 || nota > 20) {
+                    System.out.println(
+                        "Error: la nota debe estar entre 0 y 20."
+                    );
+                    break;
+                }
+
+                String notaAnterior = datos[posicion];
+                String notaNueva = String.valueOf(nota);
+
+                  datos[posicion] = notaNueva;
+                  lineas.set(i, String.join(",", datos));
+
+                  try {
+                  Files.write(archivo.toPath(), lineas);
+
+                   pilaNotas.push(new OperacionNota(
+                 cedula,
+                 posicion,
+                 notaAnterior,
+                 notaNueva
+    ));
+
+    System.out.println("¡Nota registrada correctamente!");
+
+} catch (IOException e) {
+    System.out.println("Error al guardar la nota.");
+}
+
+return;
+
+            }
+        }
+
+        if (!encontrado) {
+            System.out.println("No se encontró un alumno con esa cédula.");
+            return;
+        }
+
+        if (actualizado) {
+            Files.write(archivo.toPath(), lineas);
+            System.out.println("¡Nota registrada correctamente!");
+        }
+
+    } catch (IOException e) {
+        System.out.println("Error al leer o actualizar alumnos.txt.");
+        System.out.println("Detalle: " + e.getMessage());
+    }
+}
+    public static void deshacerUltimaNota() {
+
+    if (pilaNotas.empty()) {
+        System.out.println(
+            "No hay notas registradas en esta sesión para deshacer."
+        );
+        return;
+    }
+
+    OperacionNota operacion = pilaNotas.peek();
+    File archivo = new File("alumnos.txt");
+
+    try {
+        List<String> lineas = Files.readAllLines(archivo.toPath());
+        boolean encontrado = false;
+
+        for (int i = 0; i < lineas.size(); i++) {
+            String[] datos = lineas.get(i).split(",", -1);
+
+            if (datos.length == 7
+                    && datos[0].equals(operacion.cedula)) {
+
+                // Evitar deshacer si la nota fue modificada por otro medio.
+                if (!datos[operacion.posicionNota]
+                        .equals(operacion.notaNueva)) {
+                    System.out.println(
+                        "No se puede deshacer: la nota cambió."
+                    );
+                    return;
+                }
+
+                datos[operacion.posicionNota] =
+                    operacion.notaAnterior;
+
+                lineas.set(i, String.join(",", datos));
+                encontrado = true;
+                break;
+            }
+        }
+
+        if (!encontrado) {
+            System.out.println("No se encontró el alumno.");
+            return;
+        }
+
+        Files.write(archivo.toPath(), lineas);
+        pilaNotas.pop();
+
+        System.out.println("Última nota deshecha correctamente.");
+        System.out.println(
+            "Se restauró el valor anterior: "
+            + operacion.notaAnterior
+        );
+
+    } catch (IOException e) {
+        System.out.println("Error al deshacer la nota.");
+        System.out.println("Detalle: " + e.getMessage());
+    }
+}
+
+
 
 
         }
