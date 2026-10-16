@@ -5,7 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Queue;
+
 
 public class Main {
 
@@ -54,11 +58,11 @@ public class Main {
                     break;
 
                 case 5:
-                    System.out.println("Cola de certificados pendiente.");
+                    generarColaCertificados();
                     break;
 
                 case 6:
-                    System.out.println("Reporte general pendiente.");
+                    mostrarReporteGeneral();
                     break;
 
                 case 7:
@@ -92,6 +96,7 @@ static class OperacionNota {
 
 
     public static void registrarAlumno(Scanner entrada) {
+
 
         System.out.println("\n--- REGISTRO DE ALUMNO ---");
 
@@ -186,8 +191,8 @@ static class OperacionNota {
             System.out.println("Error al guardar el alumno.");
             System.out.println("Detalle: " + e.getMessage());
         }
-    }
 
+    }
     public static void registrarProfesor(Scanner entrada) {
 
     System.out.println("\n--- REGISTRO DE PROFESOR ---");
@@ -443,6 +448,255 @@ return;
         System.out.println("Detalle: " + e.getMessage());
     }
 }
+    public static void generarColaCertificados() {
+
+    File archivoAlumnos = new File("alumnos.txt");
+    Queue<String> colaCertificados = new LinkedList<>();
+
+    if (!archivoAlumnos.exists()) {
+        System.out.println("No existe el archivo alumnos.txt.");
+        return;
+    }
+
+    try {
+        List<String> alumnos = Files.readAllLines(
+            archivoAlumnos.toPath()
+        );
+
+        for (String linea : alumnos) {
+
+            String[] datos = linea.split(",", -1);
+
+            if (datos.length != 7) {
+                continue;
+            }
+
+            String cedula = datos[0];
+            String nombre = datos[1];
+            String programa = datos[3];
+
+            double nota1;
+            double nota2;
+            double nota3;
+
+            try {
+                nota1 = Double.parseDouble(datos[4]);
+                nota2 = Double.parseDouble(datos[5]);
+                nota3 = Double.parseDouble(datos[6]);
+            } catch (NumberFormatException e) {
+                System.out.println(
+                    "Se omitió un registro con notas inválidas: " + cedula
+                );
+                continue;
+            }
+
+            // No certificar alumnos que todavía tengan notas en cero.
+            if (nota1 == 0 || nota2 == 0 || nota3 == 0) {
+                continue;
+            }
+
+            double promedio = (nota1 + nota2 + nota3) / 3.0;
+            boolean aprobado = false;
+
+            switch (programa.toLowerCase(Locale.ROOT)) {
+                case "curso":
+                    aprobado = promedio >= 10;
+                    break;
+
+                case "diplomado":
+                    aprobado = promedio >= 14;
+                    break;
+
+                case "bootcamp":
+                    aprobado = nota1 >= 14
+                            && nota2 >= 14
+                            && nota3 >= 14;
+                    break;
+
+                default:
+                    System.out.println(
+                        "Programa desconocido para la cédula: " + cedula
+                    );
+                    break;
+            }
+
+            if (aprobado) {
+                colaCertificados.offer(
+                    cedula + "," + nombre + "," + programa
+                );
+            }
+        }
+
+        // Escribir la cola en orden FIFO.
+        try (FileWriter escritor =
+                new FileWriter("certificados_pendientes.txt", false)) {
+
+            while (!colaCertificados.isEmpty()) {
+                escritor.write(
+                    colaCertificados.poll() + System.lineSeparator()
+                );
+            }
+        }
+
+        System.out.println(
+            "Cola de certificados generada correctamente."
+        );
+        System.out.println(
+            "Archivo creado: certificados_pendientes.txt"
+        );
+
+    } catch (IOException e) {
+        System.out.println("Error al generar los certificados.");
+        System.out.println("Detalle: " + e.getMessage());
+    }
+}
+    public static void mostrarReporteGeneral() {
+
+    
+    System.out.println(" REPORTE GENERAL SGA-DO");
+    
+
+    // Mostrar alumnos registrados.
+    System.out.println("\n--- ALUMNOS REGISTRADOS ---");
+
+    File archivoAlumnos = new File("alumnos.txt");
+
+    if (!archivoAlumnos.exists()) {
+        System.out.println("Todavía no existe el archivo de alumnos.");
+    } else {
+        try {
+            List<String> alumnos =
+                Files.readAllLines(archivoAlumnos.toPath());
+
+            if (alumnos.isEmpty()) {
+                System.out.println("No hay alumnos registrados.");
+            }
+
+            for (String linea : alumnos) {
+                String[] datos = linea.split(",", -1);
+
+                if (datos.length != 7) {
+                    System.out.println("Registro de alumno inválido.");
+                    continue;
+                }
+
+                System.out.println("\nCédula: " + datos[0]);
+                System.out.println("Nombre: " + datos[1]);
+                System.out.println("Correo: " + datos[2]);
+                System.out.println("Programa: " + datos[3]);
+                System.out.println("Nota 1: " + datos[4]);
+                System.out.println("Nota 2: " + datos[5]);
+                System.out.println("Nota 3: " + datos[6]);
+
+                try {
+                    double nota1 = Double.parseDouble(datos[4]);
+                    double nota2 = Double.parseDouble(datos[5]);
+                    double nota3 = Double.parseDouble(datos[6]);
+
+                    // Solo calcular el promedio cuando existan
+                    // tres notas registradas.
+                    if (nota1 != 0 && nota2 != 0 && nota3 != 0) {
+                        double promedio =
+                            (nota1 + nota2 + nota3) / 3.0;
+
+                        System.out.printf(
+                            java.util.Locale.ROOT,
+                            "Promedio: %.2f/20%n",
+                            promedio
+                        );
+
+                        boolean aprobado;
+
+                        switch (datos[3].toLowerCase(
+                                java.util.Locale.ROOT)) {
+                            case "curso":
+                                aprobado = promedio >= 10;
+                                break;
+
+                            case "diplomado":
+                                aprobado = promedio >= 14;
+                                break;
+
+                            case "bootcamp":
+                                aprobado = nota1 >= 14
+                                        && nota2 >= 14
+                                        && nota3 >= 14;
+                                break;
+
+                            default:
+                                aprobado = false;
+                                System.out.println(
+                                    "Estado: programa desconocido"
+                                );
+                                continue;
+                        }
+
+                        System.out.println(
+                            "Estado: " + (aprobado
+                                ? "APROBADO" : "NO APROBADO")
+                        );
+
+                    } else {
+                        System.out.println(
+                            "Estado: notas incompletas"
+                        );
+                    }
+
+                } catch (NumberFormatException e) {
+                    System.out.println(
+                        "Estado: notas con formato inválido"
+                    );
+                }
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error al leer alumnos.txt.");
+        }
+    }
+
+    // Mostrar profesores registrados.
+    System.out.println("\n--- PROFESORES REGISTRADOS ---");
+
+    File archivoProfesores = new File("profesores.txt");
+
+    if (!archivoProfesores.exists()) {
+        System.out.println(
+            "Todavía no existe el archivo de profesores."
+        );
+    } else {
+        try {
+            List<String> profesores =
+                Files.readAllLines(archivoProfesores.toPath());
+
+            if (profesores.isEmpty()) {
+                System.out.println("No hay profesores registrados.");
+            }
+
+            for (String linea : profesores) {
+                String[] datos = linea.split(",", -1);
+
+                if (datos.length != 5) {
+                    System.out.println("Registro de profesor inválido.");
+                    continue;
+                }
+
+                System.out.println("\nCédula: " + datos[0]);
+                System.out.println("Nombre: " + datos[1]);
+                System.out.println("Correo: " + datos[2]);
+                System.out.println("Especialidad: " + datos[3]);
+                System.out.println("Materia: " + datos[4]);
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error al leer profesores.txt.");
+        }
+    }
+
+    System.out.println(" FIN DEL REPORTE GENERAL");
+    
+}
+
+
 
 
 
