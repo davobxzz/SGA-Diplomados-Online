@@ -1,4 +1,5 @@
 #include <stack>
+#include <queue>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -282,8 +283,8 @@ bool encontrado = false;
         return;
     }
 
-    for (const string& registro : alumnos) {
-        archivoEscritura << registro << "\n";
+    for (size_t i = 0; i < alumnos.size(); ++i) {
+        archivoEscritura << alumnos[i] << "\n";
     }
 
     archivoEscritura.close();
@@ -366,8 +367,9 @@ void deshacerUltimaNota() {
         return;
     }
 
-    for (const string& registro : alumnos) {
-        archivoEscritura << registro << "\n";
+    for (vector<string>::const_iterator registro = alumnos.begin();
+         registro != alumnos.end(); ++registro) {
+        archivoEscritura << *registro << "\n";
     }
 
     archivoEscritura.close();
@@ -378,6 +380,276 @@ void deshacerUltimaNota() {
     cout << "Se restauro el valor anterior: "
          << operacion.notaAnterior << endl;
 }
+
+void generarColaCertificados() {
+
+    cout << "\n========================================" << endl;
+    cout << "       GENERACION DE CERTIFICADOS" << endl;
+    cout << "========================================\n" << endl;
+
+    queue<string> colaCertificados;
+
+    ifstream archivoAlumnos("alumnos.txt");
+
+    if (!archivoAlumnos.is_open()) {
+        cout << "No se pudo abrir alumnos.txt" << endl;
+        return;
+    }
+
+    string linea;
+    int elegibles = 0;
+
+    // Leer los alumnos registrados
+    while (getline(archivoAlumnos, linea)) {
+
+        stringstream flujo(linea);
+        vector<string> datos;
+        string campo;
+
+        while (getline(flujo, campo, ',')) {
+            datos.push_back(campo);
+        }
+
+        if (datos.size() != 7) {
+            continue;
+        }
+
+        // Verificar que tenga las tres notas registradas
+        if (datos[4] == "0" ||
+            datos[5] == "0" ||
+            datos[6] == "0") {
+
+            continue;
+        }
+
+        double nota1, nota2, nota3;
+        stringstream(datos[4]) >> nota1;
+        stringstream(datos[5]) >> nota2;
+        stringstream(datos[6]) >> nota3;
+
+        double promedio = (nota1 + nota2 + nota3) / 3.0;
+
+        bool aprobado = false;
+
+        // Evaluar segun el programa academico
+        if (datos[3] == "Curso" && promedio >= 10) {
+            aprobado = true;
+        }
+        else if (datos[3] == "Diplomado" && promedio >= 14) {
+            aprobado = true;
+        }
+        else if (datos[3] == "Bootcamp" &&
+                 nota1 >= 14 &&
+                 nota2 >= 14 &&
+                 nota3 >= 14) {
+
+            aprobado = true;
+        }
+
+        // Agregar alumnos aprobados a la cola
+        if (aprobado) {
+
+            stringstream certificado;
+
+            certificado << datos[0] << ","
+                        << datos[1] << ","
+                        << datos[3] << ","
+                        << fixed << setprecision(2)
+                        << promedio;
+
+            colaCertificados.push(certificado.str());
+
+            elegibles++;
+        }
+    }
+
+    archivoAlumnos.close();
+
+    // Crear archivo de certificados
+    ofstream archivoCertificados("certificados_pendientes.txt");
+
+    if (!archivoCertificados.is_open()) {
+        cout << "No se pudo crear el archivo de certificados." << endl;
+        return;
+    }
+
+    cout << "\n--- ALUMNOS ELEGIBLES ---" << endl;
+
+    // Procesar la cola siguiendo FIFO
+    while (!colaCertificados.empty()) {
+
+        string certificado = colaCertificados.front();
+
+        archivoCertificados << certificado << endl;
+
+        cout << certificado << endl;
+
+        colaCertificados.pop();
+    }
+
+    archivoCertificados.close();
+
+    cout << "\nTotal de alumnos elegibles: "
+         << elegibles << endl;
+
+    cout << "Archivo generado: certificados_pendientes.txt" << endl;
+
+    cout << "\n========================================" << endl;
+    cout << "       PROCESO FINALIZADO" << endl;
+    cout << "========================================" << endl;
+}
+
+
+void reporteGeneral() {
+
+    cout << "\n========================================" << endl;
+    cout << "          REPORTE GENERAL SGA-DO" << endl;
+    cout << "========================================\n" << endl;
+
+    // REPORTE DE ALUMNOS
+    cout << "------------- ALUMNOS ------------------" << endl;
+
+    ifstream archivoAlumnos("alumnos.txt");
+
+    if (!archivoAlumnos.is_open()) {
+        cout << "No se pudo abrir alumnos.txt" << endl;
+    }
+    else {
+        string linea;
+        int totalAlumnos = 0;
+
+        while (getline(archivoAlumnos, linea)) {
+
+            stringstream flujo(linea);
+            vector<string> datos;
+            string campo;
+
+            while (getline(flujo, campo, ',')) {
+                datos.push_back(campo);
+            }
+
+            if (datos.size() != 7) {
+                continue;
+            }
+
+            totalAlumnos++;
+
+            cout << "\nCedula: " << datos[0] << endl;
+            cout << "Nombre: " << datos[1] << endl;
+            cout << "Correo: " << datos[2] << endl;
+            cout << "Programa: " << datos[3] << endl;
+
+            double notas[3] = {0, 0, 0};
+            int cantidadNotas = 0;
+            double suma = 0;
+
+            for (int i = 0; i < 3; i++) {
+
+                stringstream flujoNota(datos[i + 4]);
+                flujoNota >> notas[i];
+
+                cout << "Nota " << i + 1 << ": ";
+
+                if (datos[i + 4] == "0") {
+                    cout << "Pendiente" << endl;
+                }
+                else {
+                    cout << notas[i] << endl;
+                    suma += notas[i];
+                    cantidadNotas++;
+                }
+            }
+
+            if (cantidadNotas < 3) {
+                cout << "Promedio: Pendiente de completar notas" << endl;
+                cout << "Estado: NOTAS PENDIENTES" << endl;
+            }
+            else {
+
+                double promedio = suma / 3;
+
+                cout << "Promedio: " << promedio << endl;
+
+                bool aprobado = false;
+
+                if (datos[3] == "Curso" && promedio >= 10) {
+                    aprobado = true;
+                }
+                else if (datos[3] == "Diplomado" && promedio >= 14) {
+                    aprobado = true;
+                }
+                else if (datos[3] == "Bootcamp" &&
+                         notas[0] >= 14 &&
+                         notas[1] >= 14 &&
+                         notas[2] >= 14) {
+                    aprobado = true;
+                }
+
+                if (aprobado) {
+                    cout << "Estado: APROBADO" << endl;
+                }
+                else {
+                    cout << "Estado: NO APROBADO" << endl;
+                }
+            }
+
+            cout << "----------------------------------------" << endl;
+        }
+
+        cout << "\nTotal de alumnos registrados: "
+             << totalAlumnos << endl;
+
+        archivoAlumnos.close();
+    }
+
+    // REPORTE DE PROFESORES
+    cout << "\n------------- PROFESORES ---------------" << endl;
+
+    ifstream archivoProfesores("profesores.txt");
+
+    if (!archivoProfesores.is_open()) {
+        cout << "No se pudo abrir profesores.txt" << endl;
+    }
+    else {
+        string linea;
+        int totalProfesores = 0;
+
+        while (getline(archivoProfesores, linea)) {
+
+            stringstream flujo(linea);
+            vector<string> datos;
+            string campo;
+
+            while (getline(flujo, campo, ',')) {
+                datos.push_back(campo);
+            }
+
+            if (datos.size() != 5) {
+                continue;
+            }
+
+            totalProfesores++;
+
+            cout << "\nCedula: " << datos[0] << endl;
+            cout << "Nombre: " << datos[1] << endl;
+            cout << "Correo: " << datos[2] << endl;
+            cout << "Especialidad: " << datos[3] << endl;
+            cout << "Materia: " << datos[4] << endl;
+
+            cout << "----------------------------------------" << endl;
+        }
+
+        cout << "\nTotal de profesores registrados: "
+             << totalProfesores << endl;
+
+        archivoProfesores.close();
+    }
+
+    cout << "\n========================================" << endl;
+    cout << "       FIN DEL REPORTE GENERAL" << endl;
+    cout << "========================================" << endl;
+}
+
 
 // MENU PRINCIPAL
 int main() {
@@ -428,11 +700,11 @@ int main() {
                 break;
 
             case 5:
-                cout << "Opcion: Cola de Certificados" << endl;
+                generarColaCertificados();
                 break;
 
             case 6:
-                cout << "Opcion: Reporte General" << endl;
+                reporteGeneral();
                 break;
 
             case 7:
