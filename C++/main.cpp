@@ -1,3 +1,4 @@
+#include <stack>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -7,6 +8,17 @@
 #include <iomanip>
 
 using namespace std;
+
+// ESTRUCTURA PARA GUARDAR OPERACIONES DE NOTAS
+struct OperacionNota {
+    string cedula;
+    int posicionNota;
+    string notaAnterior;
+    string notaNueva;
+};
+
+// Pila para almacenar las operaciones
+stack<OperacionNota> pilaNotas;
 
 // REGISTRAR ALUMNO
 void registrarAlumno() {
@@ -147,7 +159,9 @@ void registrarNota() {
 
     string cedula, linea;
     vector<string> alumnos;
-    bool encontrado = false;
+bool encontrado = false;
+    bool notaRegistrada = false;
+    OperacionNota operacion;
 
     cout << "\n===== REGISTRO DE NOTAS =====" << endl;
     cout << "Ingrese la cedula del alumno: ";
@@ -224,16 +238,24 @@ void registrarNota() {
 
             stringstream conversor;
             conversor << fixed << setprecision(2) << nota;
-            datos[posicion] = conversor.str();
+            string notaAnterior = datos[posicion];
+            string notaNueva = conversor.str();
+
+            datos[posicion] = notaNueva;
+
+            operacion.cedula = cedula;
+            operacion.posicionNota = posicion;
+            operacion.notaAnterior = notaAnterior;
+            operacion.notaNueva = notaNueva;
 
             string nuevaLinea;
-
             for (size_t i = 0; i < datos.size(); i++) {
                 if (i > 0) nuevaLinea += ",";
                 nuevaLinea += datos[i];
             }
 
             alumnos.push_back(nuevaLinea);
+            notaRegistrada = true;
 
             cout << "Nota registrada correctamente." << endl;
 
@@ -249,6 +271,10 @@ void registrarNota() {
         return;
     }
 
+    if (!notaRegistrada) {
+        return;
+    }
+
     ofstream archivoEscritura("alumnos.txt");
 
     if (!archivoEscritura.is_open()) {
@@ -261,6 +287,96 @@ void registrarNota() {
     }
 
     archivoEscritura.close();
+
+    // Guardar la operacion en la pila
+    pilaNotas.push(operacion);
+
+    cout << "Nota guardada en el historial de operaciones." << endl;
+
+}
+
+
+void deshacerUltimaNota() {
+
+    if (pilaNotas.empty()) {
+        cout << "No hay notas para deshacer en esta sesion." << endl;
+        return;
+    }
+
+    OperacionNota operacion = pilaNotas.top();
+
+    ifstream archivoLectura("alumnos.txt");
+
+    if (!archivoLectura.is_open()) {
+        cout << "No se pudo abrir alumnos.txt." << endl;
+        return;
+    }
+
+    vector<string> alumnos;
+    string linea;
+    bool encontrado = false;
+
+    while (getline(archivoLectura, linea)) {
+
+        stringstream flujo(linea);
+        vector<string> datos;
+        string campo;
+
+        while (getline(flujo, campo, ',')) {
+            datos.push_back(campo);
+        }
+
+        if (datos.size() == 7 &&
+            datos[0] == operacion.cedula) {
+
+            if (datos[operacion.posicionNota] != operacion.notaNueva) {
+                cout << "No se puede deshacer: la nota fue modificada." << endl;
+                archivoLectura.close();
+                return;
+            }
+
+            datos[operacion.posicionNota] = operacion.notaAnterior;
+
+            string nuevaLinea;
+
+            for (size_t i = 0; i < datos.size(); i++) {
+                if (i > 0) nuevaLinea += ",";
+                nuevaLinea += datos[i];
+            }
+
+            alumnos.push_back(nuevaLinea);
+            encontrado = true;
+
+        } else {
+            alumnos.push_back(linea);
+        }
+    }
+
+    archivoLectura.close();
+
+    if (!encontrado) {
+        cout << "No se encontro el alumno." << endl;
+        return;
+    }
+
+    ofstream archivoEscritura("alumnos.txt");
+
+    if (!archivoEscritura.is_open()) {
+        cout << "Error al guardar los cambios." << endl;
+        return;
+    }
+
+    for (const string& registro : alumnos) {
+        archivoEscritura << registro << "\n";
+    }
+
+    archivoEscritura.close();
+
+    pilaNotas.pop();
+
+    cout << "Ultima nota deshecha correctamente." << endl;
+    cout << "Se restauro el valor anterior: "
+         << operacion.notaAnterior << endl;
 }
 
 // MENU PRINCIPAL
@@ -308,7 +424,7 @@ int main() {
                 break;
 
             case 4:
-                cout << "Opcion: Deshacer Ultimo Registro de Nota" << endl;
+                deshacerUltimaNota();
                 break;
 
             case 5:
