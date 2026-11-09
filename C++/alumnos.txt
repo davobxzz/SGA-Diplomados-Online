@@ -1,1 +1,2 @@
-33145964,david mendoza,davo@gmail.com,tituol,0,0,0
+33145964,david mendoza,davo@gmail.com,tituol,20.00,20.00,16.00
+32412779,jose,josecorreo@gmail.com,Diplomado,20.00,15.00,16.00

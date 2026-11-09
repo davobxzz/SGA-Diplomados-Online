@@ -21,7 +21,6 @@ struct OperacionNota {
 // Pila para almacenar las operaciones
 stack<OperacionNota> pilaNotas;
 
-// REGISTRAR ALUMNO
 void registrarAlumno() {
 
     string cedula, nombre, correo, programa;
@@ -38,38 +37,69 @@ void registrarAlumno() {
     cout << "Ingrese el correo: ";
     getline(cin, correo);
 
-    cout << "Tipo de programa (Curso, Diplomado o Bootcamp): ";
-    getline(cin, programa);
+    // VALIDACION DEL PROGRAMA ACADEMICO
+    do {
+        cout << "\n--- PROGRAMAS DISPONIBLES ---" << endl;
+        cout << "1. Curso" << endl;
+        cout << "2. Diplomado" << endl;
+        cout << "3. Bootcamp" << endl;
 
+        cout << "Seleccione el programa (1-3): ";
+        getline(cin, programa);
+
+        if (programa == "1") {
+            programa = "Curso";
+        }
+        else if (programa == "2") {
+            programa = "Diplomado";
+        }
+        else if (programa == "3") {
+            programa = "Bootcamp";
+        }
+        else {
+            cout << "Error: debe seleccionar una opcion valida." << endl;
+        }
+
+    } while (programa != "Curso" &&
+             programa != "Diplomado" &&
+             programa != "Bootcamp");
+
+    // VALIDACION DE DATOS
     if (cedula.empty() || nombre.empty() ||
-        correo.empty() || programa.empty() ||
+        correo.empty() ||
         cedula.find(',') != string::npos ||
         nombre.find(',') != string::npos ||
-        correo.find(',') != string::npos ||
-        programa.find(',') != string::npos) {
+        correo.find(',') != string::npos) {
 
         cout << "Error: datos vacios o con comas no permitidas." << endl;
         return;
     }
 
+    // VERIFICAR CEDULAS DUPLICADAS
     ifstream archivoLectura("alumnos.txt");
 
-    while (getline(archivoLectura, linea)) {
+    if (archivoLectura.is_open()) {
 
-        size_t posicion = linea.find(',');
+        while (getline(archivoLectura, linea)) {
 
-        if (posicion != string::npos) {
-            cedulaGuardada = linea.substr(0, posicion);
+            size_t posicion = linea.find(',');
 
-            if (cedulaGuardada == cedula) {
-                cout << "Error: ya existe un alumno con esa cedula." << endl;
-                return;
+            if (posicion != string::npos) {
+
+                cedulaGuardada = linea.substr(0, posicion);
+
+                if (cedulaGuardada == cedula) {
+                    cout << "Error: ya existe un alumno con esa cedula." << endl;
+                    archivoLectura.close();
+                    return;
+                }
             }
         }
+
+        archivoLectura.close();
     }
 
-    archivoLectura.close();
-
+    // GUARDAR ALUMNO
     ofstream archivo("alumnos.txt", ios::app);
 
     if (!archivo.is_open()) {
@@ -77,13 +107,18 @@ void registrarAlumno() {
         return;
     }
 
-    archivo << cedula << "," << nombre << ","
-            << correo << "," << programa << ",0,0,0\n";
+    archivo << cedula << ","
+            << nombre << ","
+            << correo << ","
+            << programa << ",0,0,0\n";
 
     archivo.close();
 
-    cout << "Alumno registrado correctamente." << endl;
+    cout << "\nAlumno registrado correctamente." << endl;
+    cout << "Programa asignado: " << programa << endl;
 }
+
+
 
 // REGISTRAR PROFESOR
 void registrarProfesor() {
