@@ -28,16 +28,48 @@ void registrarAlumno() {
 
     cout << "\n===== REGISTRO DE ALUMNO =====" << endl;
 
+    // Solicitar primero la cedula
     cout << "Ingrese la cedula: ";
     getline(cin, cedula);
 
+    // Validar que la cedula no este vacia
+    if (cedula.empty() || cedula.find(',') != string::npos) {
+        cout << "Error: cedula vacia o no valida." << endl;
+        return;
+    }
+
+    // Verificar inmediatamente si la cedula ya existe
+    ifstream archivoLectura("alumnos.txt");
+
+    if (archivoLectura.is_open()) {
+
+        while (getline(archivoLectura, linea)) {
+
+            size_t posicion = linea.find(',');
+
+            if (posicion != string::npos) {
+
+                cedulaGuardada = linea.substr(0, posicion);
+
+                if (cedulaGuardada == cedula) {
+                    cout << "Error: ya existe un alumno con esa cedula." << endl;
+                    archivoLectura.close();
+                    return;
+                }
+            }
+        }
+
+        archivoLectura.close();
+    }
+
+    // Si la cedula no existe, solicitar los demas datos
     cout << "Ingrese el nombre: ";
     getline(cin, nombre);
 
     cout << "Ingrese el correo: ";
     getline(cin, correo);
 
-    // VALIDACION DEL PROGRAMA ACADEMICO
+    // Seleccionar programa academico
     do {
         cout << "\n--- PROGRAMAS DISPONIBLES ---" << endl;
         cout << "1. Curso" << endl;
@@ -64,10 +96,8 @@ void registrarAlumno() {
              programa != "Diplomado" &&
              programa != "Bootcamp");
 
-    // VALIDACION DE DATOS
-    if (cedula.empty() || nombre.empty() ||
-        correo.empty() ||
-        cedula.find(',') != string::npos ||
+    // Validar los demas datos
+    if (nombre.empty() || correo.empty() ||
         nombre.find(',') != string::npos ||
         correo.find(',') != string::npos) {
 
@@ -75,31 +105,7 @@ void registrarAlumno() {
         return;
     }
 
-    // VERIFICAR CEDULAS DUPLICADAS
-    ifstream archivoLectura("alumnos.txt");
-
-    if (archivoLectura.is_open()) {
-
-        while (getline(archivoLectura, linea)) {
-
-            size_t posicion = linea.find(',');
-
-            if (posicion != string::npos) {
-
-                cedulaGuardada = linea.substr(0, posicion);
-
-                if (cedulaGuardada == cedula) {
-                    cout << "Error: ya existe un alumno con esa cedula." << endl;
-                    archivoLectura.close();
-                    return;
-                }
-            }
-        }
-
-        archivoLectura.close();
-    }
-
-    // GUARDAR ALUMNO
+    // Guardar alumno
     ofstream archivo("alumnos.txt", ios::app);
 
     if (!archivo.is_open()) {
@@ -118,8 +124,6 @@ void registrarAlumno() {
     cout << "Programa asignado: " << programa << endl;
 }
 
-
-
 // REGISTRAR PROFESOR
 void registrarProfesor() {
 
@@ -129,9 +133,41 @@ void registrarProfesor() {
 
     cout << "\n===== REGISTRO DE PROFESOR =====" << endl;
 
+    // Solicitar primero la cedula
     cout << "Ingrese la cedula: ";
     getline(cin, cedula);
 
+    // Validar la cedula
+    if (cedula.empty() || cedula.find(',') != string::npos) {
+        cout << "Error: cedula vacia o no valida." << endl;
+        return;
+    }
+
+    // Comprobar si la cedula ya existe
+    ifstream archivoLectura("profesores.txt");
+
+    if (archivoLectura.is_open()) {
+
+        while (getline(archivoLectura, linea)) {
+
+            size_t posicion = linea.find(',');
+
+            if (posicion != string::npos) {
+
+                cedulaGuardada = linea.substr(0, posicion);
+
+                if (cedulaGuardada == cedula) {
+                    cout << "Error: ya existe un profesor con esa cedula." << endl;
+                    archivoLectura.close();
+                    return;
+                }
+            }
+        }
+
+        archivoLectura.close();
+    }
+
+    // Si no existe, solicitar los demas datos
     cout << "Ingrese el nombre: ";
     getline(cin, nombre);
 
@@ -141,12 +177,14 @@ void registrarProfesor() {
     cout << "Ingrese la especialidad: ";
     getline(cin, especialidad);
 
-    cout << "Ingrese la materia: ";
+    cout << "Ingrese la materia asignada: ";
     getline(cin, materia);
 
-    if (cedula.empty() || nombre.empty() ||
-        correo.empty() || especialidad.empty() ||
-        materia.empty() || cedula.find(',') != string::npos ||
+    // Validar los campos
+    if (nombre.empty() ||
+        correo.empty() ||
+        especialidad.empty() ||
+        materia.empty() ||
         nombre.find(',') != string::npos ||
         correo.find(',') != string::npos ||
         especialidad.find(',') != string::npos ||
@@ -156,24 +194,7 @@ void registrarProfesor() {
         return;
     }
 
-    ifstream archivoLectura("profesores.txt");
-
-    while (getline(archivoLectura, linea)) {
-
-        size_t posicion = linea.find(',');
-
-        if (posicion != string::npos) {
-            cedulaGuardada = linea.substr(0, posicion);
-
-            if (cedulaGuardada == cedula) {
-                cout << "Error: ya existe un profesor con esa cedula." << endl;
-                return;
-            }
-        }
-    }
-
-    archivoLectura.close();
-
+    // Guardar profesor
     ofstream archivo("profesores.txt", ios::app);
 
     if (!archivo.is_open()) {
@@ -181,15 +202,16 @@ void registrarProfesor() {
         return;
     }
 
-    archivo << cedula << "," << nombre << ","
-            << correo << "," << especialidad << ","
+    archivo << cedula << ","
+            << nombre << ","
+            << correo << ","
+            << especialidad << ","
             << materia << "\n";
 
     archivo.close();
 
-    cout << "Profesor registrado correctamente." << endl;
+    cout << "\nProfesor registrado correctamente." << endl;
 }
-
 // REGISTRAR NOTAS
 void registrarNota() {
 
@@ -331,7 +353,6 @@ bool encontrado = false;
 
 }
 
-
 void deshacerUltimaNota() {
 
     if (pilaNotas.empty()) {
@@ -415,26 +436,35 @@ void deshacerUltimaNota() {
     cout << "Se restauro el valor anterior: "
          << operacion.notaAnterior << endl;
 }
-
 void generarColaCertificados() {
 
     cout << "\n========================================" << endl;
-    cout << "       GENERACION DE CERTIFICADOS" << endl;
+    cout << " GENERACION DE CERTIFICADOS" << endl;
     cout << "========================================\n" << endl;
 
-    queue<string> colaCertificados;
+    // Estructura para almacenar los datos del certificado
+    struct Certificado {
+        string cedula;
+        string nombre;
+        string programa;
+        double promedio;
+        bool esBootcamp;
+    };
+
+    // Crear la cola FIFO
+    queue<Certificado> colaCertificados;
 
     ifstream archivoAlumnos("alumnos.txt");
 
     if (!archivoAlumnos.is_open()) {
-        cout << "No se pudo abrir alumnos.txt" << endl;
+        cout << "No se pudo abrir alumnos.txt." << endl;
         return;
     }
 
     string linea;
-    int elegibles = 0;
+    int totalGraduandos = 0;
 
-    // Leer los alumnos registrados
+    // Leer los registros de alumnos
     while (getline(archivoAlumnos, linea)) {
 
         stringstream flujo(linea);
@@ -449,22 +479,21 @@ void generarColaCertificados() {
             continue;
         }
 
-        // Verificar que tenga las tres notas registradas
+        // Verificar que las tres notas esten registradas
         if (datos[4] == "0" ||
             datos[5] == "0" ||
             datos[6] == "0") {
-
             continue;
         }
 
-        double nota1, nota2, nota3;
-        stringstream(datos[4]) >> nota1;
-        stringstream(datos[5]) >> nota2;
-        stringstream(datos[6]) >> nota3;
+        double nota1 = stod(datos[4]);
+        double nota2 = stod(datos[5]);
+        double nota3 = stod(datos[6]);
 
         double promedio = (nota1 + nota2 + nota3) / 3.0;
 
         bool aprobado = false;
+        bool esBootcamp = false;
 
         // Evaluar segun el programa academico
         if (datos[3] == "Curso" && promedio >= 10) {
@@ -473,34 +502,38 @@ void generarColaCertificados() {
         else if (datos[3] == "Diplomado" && promedio >= 14) {
             aprobado = true;
         }
-        else if (datos[3] == "Bootcamp" &&
-                 nota1 >= 14 &&
-                 nota2 >= 14 &&
-                 nota3 >= 14) {
+        else if (datos[3] == "Bootcamp") {
 
-            aprobado = true;
+            esBootcamp = true;
+
+            if (nota1 >= 14 &&
+                nota2 >= 14 &&
+                nota3 >= 14) {
+
+                aprobado = true;
+            }
         }
 
-        // Agregar alumnos aprobados a la cola
+        // Agregar solamente alumnos aprobados
         if (aprobado) {
 
-            stringstream certificado;
+            Certificado nuevoCertificado;
 
-            certificado << datos[0] << ","
-                        << datos[1] << ","
-                        << datos[3] << ","
-                        << fixed << setprecision(2)
-                        << promedio;
+            nuevoCertificado.cedula = datos[0];
+            nuevoCertificado.nombre = datos[1];
+            nuevoCertificado.programa = datos[3];
+            nuevoCertificado.promedio = promedio;
+            nuevoCertificado.esBootcamp = esBootcamp;
 
-            colaCertificados.push(certificado.str());
+            colaCertificados.push(nuevoCertificado);
 
-            elegibles++;
+            totalGraduandos++;
         }
     }
 
     archivoAlumnos.close();
 
-    // Crear archivo de certificados
+    // Crear el reporte de certificados
     ofstream archivoCertificados("certificados_pendientes.txt");
 
     if (!archivoCertificados.is_open()) {
@@ -508,32 +541,65 @@ void generarColaCertificados() {
         return;
     }
 
-    cout << "\n--- ALUMNOS ELEGIBLES ---" << endl;
+    // Encabezado del reporte
+    archivoCertificados << "=========================================" << endl;
+    archivoCertificados << " REPORTE DE CERTIFICADOS PENDIENTES" << endl;
+    archivoCertificados << "=========================================" << endl;
+
+    archivoCertificados << "Total de graduandos en cola: "
+                        << totalGraduandos << endl;
 
     // Procesar la cola siguiendo FIFO
+    int contador = 1;
+
     while (!colaCertificados.empty()) {
 
-        string certificado = colaCertificados.front();
+        Certificado actual = colaCertificados.front();
 
-        archivoCertificados << certificado << endl;
+        archivoCertificados << "\n"
+                            << contador << ". ["
+                            << actual.cedula << "] "
+                            << actual.nombre << endl;
 
-        cout << certificado << endl;
+        archivoCertificados << " - Programa: "
+                            << actual.programa << endl;
+
+        archivoCertificados << " - Promedio Final: "
+                            << fixed << setprecision(1)
+                            << actual.promedio << endl;
+
+        if (actual.esBootcamp) {
+            archivoCertificados
+                << " - Estatus: APROBADO "
+                << "(Cumple regla de ninguna nota < 14)"
+                << endl;
+        }
+        else {
+            archivoCertificados
+                << " - Estatus: APROBADO"
+                << endl;
+        }
 
         colaCertificados.pop();
+        contador++;
     }
+
+    // Pie del reporte
+    archivoCertificados << "\n=========================================" << endl;
+    archivoCertificados << "* Fin del reporte - Generado por SGA-DO *" << endl;
 
     archivoCertificados.close();
 
-    cout << "\nTotal de alumnos elegibles: "
-         << elegibles << endl;
+    cout << "Reporte generado correctamente." << endl;
+    cout << "Total de graduandos en cola: "
+         << totalGraduandos << endl;
 
-    cout << "Archivo generado: certificados_pendientes.txt" << endl;
+    cout << "Archivo: certificados_pendientes.txt" << endl;
 
     cout << "\n========================================" << endl;
-    cout << "       PROCESO FINALIZADO" << endl;
+    cout << " PROCESO FINALIZADO" << endl;
     cout << "========================================" << endl;
 }
-
 
 void reporteGeneral() {
 
@@ -684,8 +750,6 @@ void reporteGeneral() {
     cout << "       FIN DEL REPORTE GENERAL" << endl;
     cout << "========================================" << endl;
 }
-
-
 // MENU PRINCIPAL
 int main() {
 
